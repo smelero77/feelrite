@@ -1,0 +1,71 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para la información de perfil del usuario
+// Se vincula a auth.users.id de Supabase
+model Profile {
+  id        String    @id @db.Uuid @map("id") // ID del usuario de auth.users
+  username  String?   @unique
+  website   String?
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("profiles") // Mapea al nombre de la tabla en Supabase
+}
+
+// Modelo para Pacientes
+model Patient {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  email       String       @unique
+  phone       String?
+  address     String?
+  avatarUrl   String?      @map("avatar_url")
+  notes       String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  appointments Appointment[]
+  invoices    Invoice[]
+
+  @@map("patients")
+}
+
+// Modelo para Citas
+model Appointment {
+  id          String    @id @default(uuid()) @db.Uuid
+  date        DateTime  @db.Date
+  time        String
+  type        String
+  status      String
+  notes       String?
+  patientId   String    @db.Uuid @map("patient_id")
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("appointments")
+}
+
+// Modelo para Facturas
+model Invoice {
+  id          String    @id @default(uuid()) @db.Uuid
+  invoiceNumber String    @unique @map("invoice_number")
+  date        DateTime  @db.Date
+  dueDate     DateTime  @db.Date @map("due_date")
+  totalAmount Float     @map("total_amount")
+  status      String
+  notes       String?
+  patientId   String    @db.Uuid @map("patient_id")
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("invoices")
+}

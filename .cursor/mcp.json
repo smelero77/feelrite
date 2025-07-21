@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "shadcn",
+      "args": [
+        "registry:mcp"
+      ],
+      "env": {
+        "REGISTRY_URL": "https://tweakcn.com/r/themes/registry.json"
+      }
+    }
+  }
+} 
