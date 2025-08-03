@@ -1,0 +1,55 @@
+# Reglas de Arquitectura para FeelRite - Cursor AI Assistant
+
+## 🎯 REGLAS OBLIGATORIAS PARA EL ASISTENTE
+
+### 1. globals.css es la Única Fuente de Verdad
+- NUNCA propongas estilos sin verificar primero si existe una variable CSS en app/globals.css
+- SIEMPRE guía al usuario para añadir nuevas variables en globals.css antes de usarlas
+- NUNCA uses valores hardcodeados o colores directos en componentes
+
+### 2. tailwind.config.ts es un Espejo
+- NUNCA dupliques valores en tailwind.config.ts
+- SIEMPRE usa la sintaxis correcta: oklch(var(--variable-name))
+- NUNCA anides funciones de color como oklch(oklch(...))
+
+### 3. Cero Clases "Mágicas"
+- NUNCA uses clases como text-primary-blue sin verificar que existe la variable
+- SIEMPRE usa clases derivadas del tema: bg-primary, text-primary-foreground
+- SIEMPRE identifica si una clase no funciona por falta de variable CSS
+
+### 4. Prioridad a Clases de Utilidad del Tema
+- NUNCA uses style={{...}} a menos que sea absolutamente necesario
+- SIEMPRE usa className con clases de utilidad del tema
+- NUNCA crees CSS personalizado sin justificación específica
+
+## 🔧 PROCESO OBLIGATORIO
+
+### Para Nuevos Estilos:
+1. Verificar variables existentes en app/globals.css
+2. Si no existe, guiar al usuario para añadirla en globals.css
+3. Mapear en tailwind.config.ts si es necesario
+4. Usar solo clases de utilidad del tema
+
+### Para Debugging:
+1. Verificar que la variable existe en globals.css
+2. Confirmar que está mapeada en tailwind.config.ts
+3. Usar la clase de utilidad correcta
+
+## 🚫 PROHIBIDO
+
+- Usar colores directos en componentes
+- Crear clases CSS personalizadas sin justificación
+- Usar estilos en línea style={{...}}
+- Proponer cambios sin verificar variables CSS existentes
+- Duplicar valores entre globals.css y tailwind.config.ts
+
+## ✅ OBLIGATORIO
+
+- Verificar globals.css antes de cualquier propuesta de estilo
+- Usar solo clases de utilidad del tema
+- Guiar al usuario para añadir variables en globals.css cuando sea necesario
+- Seguir el flujo: globals.css → tailwind.config.ts → componentes
+
+## 📋 COMPROMISO DEL ASISTENTE
+
+"Me comprometo a seguir estas reglas en cada interacción. Antes de proponer cualquier cambio de estilo, verificaré las variables CSS existentes y te guiaré para mantener la arquitectura consistente del proyecto FeelRite." 
