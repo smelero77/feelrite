@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { UseFormRegister, UseFormControl, FieldErrors, UseFormWatch, UseFormSetValue, useFieldArray } from "react-hook-form"
+import { Controller } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,38 +9,32 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Mail, Phone, MessageCircle, User, Plus, Edit, Trash2, Users } from "lucide-react"
-
-interface Contact {
-  id: string
-  name: string
-  relationship: string
-  phone: string
-  email: string
-  whatsapp?: string
-  isPrimary: boolean
-  isEmergency: boolean
-}
+import { PatientFormData } from "@/lib/validators/patient-validator"
 
 interface MultipleContactsSectionProps {
   className?: string
+  register: UseFormRegister<PatientFormData>
+  control: UseFormControl<PatientFormData>
+  errors: FieldErrors<PatientFormData>
+  watch: UseFormWatch<PatientFormData>
+  setValue: UseFormSetValue<PatientFormData>
 }
 
-export function MultipleContactsSection({ className }: MultipleContactsSectionProps) {
-  const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: "1",
-      name: "",
-      relationship: "",
-      phone: "",
-      email: "",
-      whatsapp: "",
-      isPrimary: true,
-      isEmergency: false
-    }
-  ])
+export function MultipleContactsSection({ 
+  className, 
+  register, 
+  control, 
+  errors, 
+  watch, 
+  setValue 
+}: MultipleContactsSectionProps) {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "contacts"
+  })
 
   const addContact = () => {
-    const newContact: Contact = {
+    append({
       id: Date.now().toString(),
       name: "",
       relationship: "",
@@ -48,37 +43,19 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
       whatsapp: "",
       isPrimary: false,
       isEmergency: false
-    }
-    setContacts([...contacts, newContact])
+    })
   }
 
-  const removeContact = (id: string) => {
-    if (contacts.length > 1) {
-      setContacts(contacts.filter(contact => contact.id !== id))
-    }
+  const setPrimaryContact = (index: number) => {
+    fields.forEach((_, fieldIndex) => {
+      setValue(`contacts.${fieldIndex}.isPrimary`, fieldIndex === index)
+    })
   }
 
-  const updateContact = (id: string, field: keyof Contact, value: any) => {
-    setContacts(contacts.map(contact => {
-      if (contact.id === id) {
-        return { ...contact, [field]: value }
-      }
-      return contact
-    }))
-  }
-
-  const setPrimaryContact = (id: string) => {
-    setContacts(contacts.map(contact => ({
-      ...contact,
-      isPrimary: contact.id === id
-    })))
-  }
-
-  const setEmergencyContact = (id: string) => {
-    setContacts(contacts.map(contact => ({
-      ...contact,
-      isEmergency: contact.id === id
-    })))
+  const setEmergencyContact = (index: number) => {
+    fields.forEach((_, fieldIndex) => {
+      setValue(`contacts.${fieldIndex}.isEmergency`, fieldIndex === index)
+    })
   }
 
   return (
@@ -93,24 +70,25 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {contacts.map((contact, index) => (
+        {fields.map((contact, index) => (
           <div key={contact.id} className="border rounded-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">Contacto {index + 1}</span>
-                {contact.isPrimary && (
+                {watch(`contacts.${index}.isPrimary`) && (
                   <Badge variant="default" className="text-xs">Principal</Badge>
                 )}
-                {contact.isEmergency && (
+                {watch(`contacts.${index}.isEmergency`) && (
                   <Badge variant="destructive" className="text-xs">Emergencia</Badge>
                 )}
               </div>
-              {contacts.length > 1 && (
+              {fields.length > 1 && (
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => removeContact(contact.id)}
+                  onClick={() => remove(index)}
                   className="text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -124,30 +102,38 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
                 <Input
                   id={`name-${contact.id}`}
                   placeholder="Nombre completo"
-                  value={contact.name}
-                  onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
+                  {...register(`contacts.${index}.name`)}
                 />
+                {errors.contacts?.[index]?.name && (
+                  <p className="text-sm text-destructive mt-1">{errors.contacts[index]?.name?.message}</p>
+                )}
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor={`relationship-${contact.id}`}>Relación</Label>
-                <Select
-                  value={contact.relationship}
-                  onValueChange={(value) => updateContact(contact.id, 'relationship', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona la relación" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="parent">Padre/Madre</SelectItem>
-                    <SelectItem value="guardian">Tutor Legal</SelectItem>
-                    <SelectItem value="spouse">Cónyuge</SelectItem>
-                    <SelectItem value="sibling">Hermano/a</SelectItem>
-                    <SelectItem value="child">Hijo/a</SelectItem>
-                    <SelectItem value="friend">Amigo/a</SelectItem>
-                    <SelectItem value="other">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name={`contacts.${index}.relationship`}
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona la relación" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="parent">Padre/Madre</SelectItem>
+                        <SelectItem value="guardian">Tutor Legal</SelectItem>
+                        <SelectItem value="spouse">Cónyuge</SelectItem>
+                        <SelectItem value="sibling">Hermano/a</SelectItem>
+                        <SelectItem value="child">Hijo/a</SelectItem>
+                        <SelectItem value="friend">Amigo/a</SelectItem>
+                        <SelectItem value="other">Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.contacts?.[index]?.relationship && (
+                  <p className="text-sm text-destructive mt-1">{errors.contacts[index]?.relationship?.message}</p>
+                )}
               </div>
             </div>
 
@@ -161,10 +147,12 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
                     type="tel"
                     placeholder="Número de teléfono"
                     className="pl-10"
-                    value={contact.phone}
-                    onChange={(e) => updateContact(contact.id, 'phone', e.target.value)}
+                    {...register(`contacts.${index}.phone`)}
                   />
                 </div>
+                {errors.contacts?.[index]?.phone && (
+                  <p className="text-sm text-destructive mt-1">{errors.contacts[index]?.phone?.message}</p>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -176,10 +164,12 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
                     type="email"
                     placeholder="Dirección de email"
                     className="pl-10"
-                    value={contact.email}
-                    onChange={(e) => updateContact(contact.id, 'email', e.target.value)}
+                    {...register(`contacts.${index}.email`)}
                   />
                 </div>
+                {errors.contacts?.[index]?.email && (
+                  <p className="text-sm text-destructive mt-1">{errors.contacts[index]?.email?.message}</p>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -191,8 +181,7 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
                     type="tel"
                     placeholder="Número de WhatsApp"
                     className="pl-10"
-                    value={contact.whatsapp}
-                    onChange={(e) => updateContact(contact.id, 'whatsapp', e.target.value)}
+                    {...register(`contacts.${index}.whatsapp`)}
                   />
                 </div>
               </div>
@@ -200,12 +189,18 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
 
             <div className="flex items-center gap-4">
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id={`primary-${contact.id}`}
-                  checked={contact.isPrimary}
-                  onChange={() => setPrimaryContact(contact.id)}
-                  className="rounded border-gray-300"
+                <Controller
+                  name={`contacts.${index}.isPrimary`}
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="checkbox"
+                      id={`primary-${contact.id}`}
+                      checked={field.value}
+                      onChange={() => setPrimaryContact(index)}
+                      className="rounded border-gray-300"
+                    />
+                  )}
                 />
                 <Label htmlFor={`primary-${contact.id}`} className="text-sm">
                   Contacto Principal
@@ -213,12 +208,18 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
               </div>
               
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id={`emergency-${contact.id}`}
-                  checked={contact.isEmergency}
-                  onChange={() => setEmergencyContact(contact.id)}
-                  className="rounded border-gray-300"
+                <Controller
+                  name={`contacts.${index}.isEmergency`}
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="checkbox"
+                      id={`emergency-${contact.id}`}
+                      checked={field.value}
+                      onChange={() => setEmergencyContact(index)}
+                      className="rounded border-gray-300"
+                    />
+                  )}
                 />
                 <Label htmlFor={`emergency-${contact.id}`} className="text-sm">
                   Contacto de Emergencia
@@ -227,6 +228,10 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
             </div>
           </div>
         ))}
+
+        {errors.contacts && typeof errors.contacts === 'object' && 'message' in errors.contacts && (
+          <p className="text-sm text-destructive mt-1">{errors.contacts.message}</p>
+        )}
 
         <Button
           type="button"
@@ -241,8 +246,8 @@ export function MultipleContactsSection({ className }: MultipleContactsSectionPr
         <div className="bg-muted/50 rounded-lg p-4">
           <h4 className="font-medium mb-2">Información Importante</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Al menos un contacto debe ser marcado como "Principal"</li>
-            <li>• Se recomienda tener al menos un "Contacto de Emergencia"</li>
+            <li>• Al menos un contacto debe ser marcado como &quot;Principal&quot;</li>
+            <li>• Se recomienda tener al menos un &quot;Contacto de Emergencia&quot;</li>
             <li>• Para menores de edad, es obligatorio incluir información de padres o tutores</li>
           </ul>
         </div>

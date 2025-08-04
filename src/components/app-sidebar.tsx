@@ -135,7 +135,10 @@ const data = {
           title: "Privacidad",
           url: "/settings/privacy",
         },
-
+        {
+          title: "Consentimientos",
+          url: "/settings/consents",
+        },
       ],
     },
   ],
