@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -10,53 +10,15 @@ import { MultipleContactsSection } from "./form-sections/multiple-contacts-secti
 import { AddressSection } from "./form-sections/address-section"
 import { IdentitySection } from "./form-sections/identity-section"
 import { BillingSection } from "./form-sections/billing-section"
-import { Stepper, type Step } from "@/components/ui/stepper"
-import { Save, X, ArrowLeft, ArrowRight } from "lucide-react"
-import { patientSchema } from "@/lib/validators/patient-validator"
-
-type FormData = {
-  firstName: string
-  lastName: string
-  birthDate: string
-  gender: string
-  notes: string
-  isMinor: boolean
-  contacts: Array<{
-    id: string
-    name: string
-    relationship: string
-    phone: string
-    email: string
-    whatsapp: string
-    isPrimary: boolean
-    isEmergency: boolean
-  }>
-  street: string
-  number: string
-  city: string
-  state: string
-  postalCode: string
-  country: string
-  documentType: string
-  documentNumber: string
-  issueDate: string
-  expiryDate: string
-  billingEnabled: boolean
-  billingName: string
-  billingEmail: string
-  billingDocumentType: string
-  billingDocumentNumber: string
-  billingStreet: string
-  billingNumber: string
-  billingCity: string
-  billingPostalCode: string
-}
+import { Save, X, ArrowLeft, ArrowRight, Check } from "lucide-react"
+import { patientSchema, PatientFormData } from "@/lib/validators/patient-validator"
+import { cn } from "@/lib/utils"
 
 export function DesktopPatientForm() {
   const [step, setStep] = useState(1)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(patientSchema),
     defaultValues: {
       firstName: "",
@@ -99,36 +61,16 @@ export function DesktopPatientForm() {
     }
   })
 
-  const steps: Step[] = [
-    {
-      id: 1,
-      title: "Información Básica",
-      description: "Datos personales del paciente"
-    },
-    {
-      id: 2,
-      title: "Contactos",
-      description: "Información de contacto y emergencia"
-    },
-    {
-      id: 3,
-      title: "Dirección",
-      description: "Dirección de residencia"
-    },
-    {
-      id: 4,
-      title: "Identidad",
-      description: "Documentos de identificación"
-    },
-    {
-      id: 5,
-      title: "Facturación",
-      description: "Información de facturación (opcional)"
-    }
+  const steps = [
+    { id: 1, title: "Información Básica" },
+    { id: 2, title: "Contactos" },
+    { id: 3, title: "Dirección" },
+    { id: 4, title: "Identidad" },
+    { id: 5, title: "Facturación" }
   ]
 
   const handleNext = async () => {
-    let fieldsToValidate: string[] = []
+    let fieldsToValidate: (keyof PatientFormData)[] = []
     
     switch (step) {
       case 1:
@@ -148,7 +90,7 @@ export function DesktopPatientForm() {
         break
     }
     
-    const isValid = await form.trigger(fieldsToValidate as any)
+    const isValid = await form.trigger(fieldsToValidate)
     
     if (isValid) {
       // Marcar el paso como completado
@@ -164,11 +106,17 @@ export function DesktopPatientForm() {
 
   const handlePrevious = () => {
     if (step > 1) {
-      setStep(step - 1)
+      // Al retroceder, mantener los pasos completados hasta el paso anterior
+      const newStep = step - 1
+      setStep(newStep)
+      
+      // Ajustar completedSteps para que solo incluya los pasos hasta el paso actual
+      const updatedCompletedSteps = completedSteps.filter(completedStep => completedStep < newStep)
+      setCompletedSteps(updatedCompletedSteps)
     }
   }
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: PatientFormData) => {
     console.log("Datos del formulario:", data)
     // Aquí iría la lógica para guardar el paciente
   }
@@ -177,22 +125,13 @@ export function DesktopPatientForm() {
     switch (step) {
       case 1:
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BasicInfoSection 
-              register={form.register}
-              control={form.control}
-              errors={form.formState.errors}
-              watch={form.watch}
-              setValue={form.setValue}
-            />
-            <BillingSection 
-              register={form.register}
-              control={form.control}
-              errors={form.formState.errors}
-              watch={form.watch}
-              setValue={form.setValue}
-            />
-          </div>
+          <BasicInfoSection 
+            register={form.register}
+            control={form.control}
+            errors={form.formState.errors}
+            watch={form.watch}
+            setValue={form.setValue}
+          />
         )
       case 2:
         return (
@@ -240,7 +179,7 @@ export function DesktopPatientForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -249,68 +188,122 @@ export function DesktopPatientForm() {
             Añadir un nuevo paciente al sistema
           </p>
         </div>
-        <Button type="button" variant="outline">
-          <X className="h-4 w-4 mr-2" />
-          Cancelar
-        </Button>
       </div>
 
-      {/* Stepper */}
-      <Card>
-        <CardContent className="pt-6">
-          <Stepper 
-            steps={steps}
-            currentStep={step}
-            completedSteps={completedSteps}
-          />
-        </CardContent>
-      </Card>
+      {/* Barra Separadora */}
+      <div className="relative my-8">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-muted" />
+        </div>
+      </div>
 
-      {/* Step Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Paso {step}: {steps.find(s => s.id === step)?.title}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {steps.find(s => s.id === step)?.description}
-          </p>
-        </CardHeader>
-        <CardContent>
-          {renderStepContent()}
-        </CardContent>
-      </Card>
+      <div className="flex gap-8">
+                 {/* Vertical Stepper */}
+         <div className="w-80 flex-shrink-0">
+           <div className="pt-8">
+             <div className="relative">
+              {/* Progress Bar Background */}
+              <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-muted" />
+              
+                                            {/* Progress Bar Fill */}
+                <div 
+                  className="absolute left-5 top-0 bottom-0 w-0.5 bg-primary transition-all duration-700 ease-out"
+                  style={{ 
+                    height: `${(completedSteps.length / (steps.length - 1)) * 100}%`,
+                    transformOrigin: 'top'
+                  }}
+                />
+              
+              {steps.map((stepItem, index) => {
+                const isCompleted = completedSteps.includes(stepItem.id)
+                const isCurrent = step === stepItem.id
+                const isFuture = stepItem.id > step
 
-      {/* Navigation Buttons */}
-      <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={step === 1}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Anterior
-        </Button>
+                return (
+                  <div key={stepItem.id} className="relative flex items-start mb-8 last:mb-0">
+                                         {/* Step Circle */}
+                     <div className="flex items-center justify-center w-10 h-10 z-10">
+                       {isCompleted ? (
+                         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-all duration-500 ease-out transform scale-110">
+                           <Check className="h-4 w-4 text-primary-foreground transition-all duration-300" />
+                         </div>
+                       ) : (
+                         <div className={cn(
+                           "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-500 ease-out",
+                           isCurrent && "bg-primary text-primary-foreground transform scale-110",
+                           isFuture && "bg-muted text-muted-foreground"
+                         )}>
+                           {stepItem.id}
+                         </div>
+                       )}
+                     </div>
 
-        <div className="flex items-center gap-2">
-          {step < steps.length ? (
+                                         {/* Step Content */}
+                     <div className="ml-4 flex-1">
+                       <h3 className={cn(
+                         "text-sm font-medium transition-all duration-500 ease-out",
+                         isCompleted && "text-primary",
+                         isCurrent && "text-primary",
+                         isFuture && "text-muted-foreground"
+                       )}>
+                         {stepItem.title}
+                       </h3>
+                       {isCurrent && (
+                         <p className="text-xs text-muted-foreground mt-1 transition-all duration-300 ease-out">
+                           Paso actual
+                         </p>
+                       )}
+                       {isCompleted && (
+                         <p className="text-xs text-primary mt-1 transition-all duration-300 ease-out">
+                           Completado
+                         </p>
+                       )}
+                     </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+                 {/* Step Content */}
+         <div className="flex-1">
+           <div className="pt-8 space-y-4">
+             {renderStepContent()}
+           </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between mt-8">
             <Button
               type="button"
-              onClick={handleNext}
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={step === 1}
             >
-              Siguiente
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Anterior
             </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={() => form.handleSubmit(onSubmit)()}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Finalizar y Guardar
-            </Button>
-          )}
+
+            <div className="flex items-center gap-2">
+              {step < steps.length ? (
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                >
+                  Siguiente
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => form.handleSubmit(onSubmit)()}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Finalizar y Guardar
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

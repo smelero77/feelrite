@@ -33,7 +33,7 @@ export function BasicInfoSection({
   const isMinor = watch("isMinor")
 
   return (
-    <Card className={className}>
+    <Card className={`${className} bg-background/50 border-border/50`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />

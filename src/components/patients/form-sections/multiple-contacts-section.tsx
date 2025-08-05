@@ -59,7 +59,7 @@ export function MultipleContactsSection({
   }
 
   return (
-    <Card className={className}>
+    <Card className={`${className} bg-background/50 border-border/50`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />

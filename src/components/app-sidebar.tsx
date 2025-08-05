@@ -139,6 +139,10 @@ const data = {
           title: "Consentimientos",
           url: "/settings/consents",
         },
+        {
+          title: "Tarifas",
+          url: "/settings/tariffs",
+        },
       ],
     },
   ],
