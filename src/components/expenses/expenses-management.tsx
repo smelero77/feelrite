@@ -6,10 +6,11 @@ import { Plus, Receipt, Euro, Calculator, FileText } from "lucide-react"
 import { ExpenseForm } from "./expense-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { KpiCard } from "./kpi-card"
-import { ExpensesFilters, DateRange } from "./expenses-filters"
+import { ExpensesFilters } from "./expenses-filters"
 import { ExpensesChart } from "./expenses-chart"
 import { ExpenseTable } from "./expense-table"
 import { isWithinInterval, parseISO } from "date-fns"
+import type { DateRange } from "react-day-picker"
 
 export type Expense = {
   id: string
@@ -105,7 +106,7 @@ export function ExpensesManagement() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   
   // Estados para filtros
-  const [dateRange, setDateRange] = useState<DateRange>({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
     to: new Date(new Date().getFullYear(), new Date().getMonth(), 0)
   })
@@ -122,9 +123,8 @@ export function ExpensesManagement() {
   const filteredExpenses = useMemo(() => {
     return expenses.filter(expense => {
       // Filtro por rango de fechas
-      const expenseDate = parseISO(expense.date)
-      const isInDateRange = dateRange.from && dateRange.to 
-        ? isWithinInterval(expenseDate, { start: dateRange.from, end: dateRange.to })
+      const isInDateRange = dateRange?.from && dateRange?.to 
+        ? isWithinInterval(parseISO(expense.date), { start: dateRange.from, end: dateRange.to })
         : true
 
       // Filtro por categoría

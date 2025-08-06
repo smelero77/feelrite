@@ -1,6 +1,7 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
+import type { DateRange } from "react-day-picker"
+
+import DateRangePicker from "@/components/ui/date-range-picker"
 import {
   Select,
   SelectContent,
@@ -8,17 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search } from "lucide-react"
-import { DateRangePicker } from "@/components/ui/date-range-picker"
-
-export type DateRange = {
-  from: Date
-  to: Date
-}
+import { Input } from "@/components/ui/input"
 
 interface ExpensesFiltersProps {
-  dateRange: DateRange
-  onDateRangeChange: (range: DateRange) => void
+  dateRange: DateRange | undefined
+  onDateRangeChange: (range: DateRange | undefined) => void
   selectedCategory: string
   onCategoryChange: (category: string) => void
   searchTerm: string
@@ -33,21 +28,15 @@ export function ExpensesFilters({
   onCategoryChange,
   searchTerm,
   onSearchChange,
-  categories
+  categories,
 }: ExpensesFiltersProps) {
-
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center">
-      {/* Selector de rango de fechas */}
       <DateRangePicker
-        onUpdate={({ range }) => onDateRangeChange({ from: range.from, to: range.to || range.from })}
-        initialDateFrom={dateRange.from}
-        initialDateTo={dateRange.to}
-        align="start"
-        showCompare={false}
+        onDateChange={onDateRangeChange}
+        className="w-full md:w-auto"
       />
 
-      {/* Selector de categoría */}
       <Select value={selectedCategory} onValueChange={onCategoryChange}>
         <SelectTrigger className="w-full md:w-[180px]">
           <SelectValue placeholder="Todas las categorías" />
@@ -62,7 +51,6 @@ export function ExpensesFilters({
         </SelectContent>
       </Select>
 
-      {/* Búsqueda */}
       <div className="relative w-full md:w-[250px]">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
@@ -74,4 +62,4 @@ export function ExpensesFilters({
       </div>
     </div>
   )
-} 
+}

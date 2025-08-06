@@ -15,7 +15,7 @@ export default function Home() {
               <h1 className="text-lg font-semibold">FeelRite</h1>
             </div>
           </header>
-          <main className="flex-1 overflow-y-auto bg-background">
+          <div className="flex-1 overflow-y-auto bg-background">
             <div className="container mx-auto p-6">
               <h1 className="text-3xl font-bold text-foreground mb-6">
                 Bienvenido a FeelRite
@@ -30,7 +30,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </main>
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>
